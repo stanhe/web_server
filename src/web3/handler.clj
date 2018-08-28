@@ -52,6 +52,8 @@
       wrap-slurp-body))
 ;;test with (body-echo-app (mock/request :post "/" "Echo!"))
 
+
+;; cheshire
 ;;recive json
 (defn wrap-json
   [handler]
@@ -62,14 +64,6 @@
       (-> (ring-response/response "Sorry,that's not Json.")
           (ring-response/status 400)))))
 
-;;perform json back
-(defn handle-clojurefy
-  [request]
-  (-> (:body request)
-      str
-      ring-response/response
-      (ring-response/content-type "application/edn")))
-
 ;; cheshire
 ;;json handler
 ;; (defn wrap-json-response
@@ -78,6 +72,15 @@
 ;;     (-> (handler request)
 ;;         (update :body json/encode)
 ;;         (ring-response/content-type "application/json"))))
+;;perform json back
+
+(defn handle-clojurefy
+  [request]
+  (-> (:body request)
+      str
+      ring-response/response
+      (ring-response/content-type "application/edn")))
+
 
 (def handler-info
   (ring-json/wrap-json-response
@@ -87,16 +90,18 @@
           "OS Version" (System/getProperty "os.version")}
          ring-response/response))))
 
+;; can't parse json ???
 (def json-routes
   (routes
-   (POST "/cloj" [] (ring-json/wrap-json-body handle-clojurefy))))
+   (POST "/cloj" [] (ring-json/wrap-json-body handle-clojurefy {:keywords? true}))))
 
 
 (def body-routes
   (-> (routes
-       (ANY "/echo" [:as {body :body}] (str body)))
-      (wrap-routes wrap-slurp-body)
-      ))
+       (ANY "/echo" [:as {body :body}] (str body))
+        ;; (POST "/cloj" [] (wrap-json handle-clojurefy))
+       )
+      (wrap-routes wrap-slurp-body)))
 
 (defroutes no-body-routes
   (GET "/" [] "Hello World123")
